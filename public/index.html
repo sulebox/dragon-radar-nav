@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dragon Radar Navigation</title>
+    
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    
+    <!-- Mapbox Directions Plugin -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.css" type="text/css">
+
+    <!-- Retro Font (VT323 for Digital look) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --radar-bg: #001100;
+            --radar-grid: rgba(0, 255, 0, 0.3);
+            --radar-bright: #00ff00;
+            --dragon-ball: #ffdd00;
+            --dragon-ball-glow: #ffaa00;
+            --ui-bg: rgba(0, 20, 0, 0.85);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: var(--radar-bg);
+            color: var(--radar-bright);
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+        }
+
+        /* --- MAP CONTAINER & OVERLAYS --- */
+        #map {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            /* Filter to make the map look more unified and retro */
+            filter: sepia(100%) hue-rotate(50deg) saturate(300%) contrast(1.2) brightness(0.8);
+        }
+
+        /* The Grid System (Radar Grid) */
+        .radar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicking on map */
+            z-index: 10;
+            background-image: 
+                linear-gradient(var(--radar-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--radar-grid) 1px, transparent 1px);
+            background-size: 50px 50px;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        /* Circular vignette to mimic round radar screen (optional, subtly applied corners) */
+        .radar-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 11;
+            background: radial-gradient(circle, transparent 50%, #000 130%);
+        }
+
+        /* Scanline Animation */
+        .scanline {
+            width: 100%;
+            height: 5px;
+            background: rgba(0, 255, 0, 0.4);
+            position: absolute;
+            z-index: 12;
+            top: 0;
+            left: 0;
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+            box-shadow: 0 0 10px var(--radar-bright);
+        }
+
+        @keyframes scan {
+            0% { top: -10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 110%; opacity: 0; }
+        }
+
+        /* --- UI CUSTOMIZATION --- */
+        
+        /* Mapbox Directions UI Overrides */
+        .mapboxgl-ctrl-directions {
+            background-color: var(--ui-bg) !important;
+            border: 2px solid var(--radar-bright) !important;
+            box-shadow: 0 0 15px var(--radar-bright), inset 0 0 20px rgba(0,50,0,0.5) !important;
+            color: var(--radar-bright) !important;
+            font-family: 'VT323', monospace;
+            min-width: 300px;
+        }
+
+        .mapboxgl-ctrl-directions input {
+            background-color: #000 !important;
+            color: var(--radar-bright) !important;
+            border: 1px solid var(--radar-bright) !important;
+            font-family: 'VT323', monospace;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+        }
+        
+        .mapboxgl-ctrl-directions .directions-icon {
+            filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
+        }
+
+        .directions-control-instructions {
+            background-color: var(--ui-bg) !important;
+            height: auto;
+        }
+
+        /* Top Header / Switch */
+        .radar-header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            background: var(--ui-bg);
+            border: 2px solid var(--radar-bright);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px var(--radar-bright);
+            text-align: center;
+        }
+        
+        .radar-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px var(--radar-bright);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* --- MARKERS & ROUTE STYLING --- */
+
+        /* User Location: Red Triangle */
+        .mapboxgl-user-location-dot {
+            background-color: transparent !important;
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+        
+        .mapboxgl-user-location-dot::before {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #ff0000; /* Red Triangle */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: drop-shadow(0 0 5px #ff0000);
+            animation: pulse-red 1s infinite;
+        }
+        
+        .mapboxgl-user-location-dot::after {
+            display: none !important; /* Remove the blue circle */
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Destination: Dragon Ball (Glowing Yellow Orb) */
+        /* Note: We target the specific class Mapbox Directions adds for destination */
+        .mapboxgl-marker-anchor-center {
+            /* Reset default pin */
+            background-image: none !important;
+            background-color: transparent !important;
+            width: 30px !important;
+            height: 30px !important;
+        }
+
+        .dragon-ball-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--dragon-ball), var(--dragon-ball-glow));
+            box-shadow: 0 0 15px var(--dragon-ball), inset -2px -2px 5px rgba(0,0,0,0.5);
+            border: 1px solid #fff;
+            position: relative;
+            animation: bounce 2s infinite ease-in-out;
+        }
+        
+        /* Star on the Dragon Ball (CSS Art) */
+        .dragon-ball-marker::after {
+            content: '★';
+            color: #d94e00;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .loader-text {
+            color: var(--radar-bright);
+            font-size: 2rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div style="font-size: 4rem;">⌛</div>
+        <div class="loader-text">INITIALIZING RADAR...</div>
+    </div>
+
+    <!-- UI Header -->
+    <div class="radar-header">
+        <h1>DRAGON RADAR</h1>
+        <div style="font-size: 0.8rem; opacity: 0.8;">MODE: NAVIGATION</div>
+    </div>
+
+    <!-- Radar Effects -->
+    <div class="radar-overlay"></div>
+    <div class="radar-vignette"></div>
+    <div class="scanline"></div>
+
+    <!-- The Map -->
+    <div id="map"></div>
+
+    <script>
+        // DOM Elements
+        const loader = document.getElementById('loader');
+
+        // Custom Styles for the Route Line (Neon Green/Yellow)
+        // This array overrides the default Mapbox Directions layers
+        const customRouteStyles = [
+            // Route Line (Background/Shadow)
+            {
+                'id': 'directions-route-line-casing',
+                'type': 'line',
+                'source': 'directions',
+                'layout': {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                'paint': {
+                    'line-color': '#004400',
+                    'line-width': 12
+                },
+                'filter': [
+                    'all',
+                    ['in', '$type', 'LineString'],
+                    ['in', 'route', 'selected']
+                ]
+            },
+            // Route Line (Main - Neon Green)
+            {
+                'id': 'directions-route-line',
+                'type': 'line',
+                'source': 'directions',
+                'layout': {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                'paint': {
+                    'line-color': '#00ff00', /* Radar Green */
+                    'line-width': 7,
+                    'line-blur': 2
+                },
+                'filter': [
+                    'all',
+                    ['in', '$type', 'LineString'],
+                    ['in', 'route', 'selected']
+                ]
+            },
+            // Origin Marker (Start) - Custom styled via JS later, but base definition here
+            {
+                'id': 'directions-origin-point',
+                'type': 'circle',
+                'source': 'directions',
+                'paint': {
+                    'circle-radius': 10,
+                    'circle-color': '#ff0000'
+                },
+                'filter': [
+                    'all',
+                    ['in', '$type', 'Point'],
+                    ['in', 'marker-symbol', 'A']
+                ]
+            },
+            // Destination Marker (End) - We will hide the default circle and append custom DOM element
+            {
+                'id': 'directions-destination-point',
+                'type': 'circle',
+                'source': 'directions',
+                'paint': {
+                    'circle-radius': 0, // Hide default, we use DOM marker
+                    'circle-color': '#000000'
+                },
+                'filter': [
+                    'all',
+                    ['in', '$type', 'Point'],
+                    ['in', 'marker-symbol', 'B']
+                ]
+            }
+        ];
+
+        // Main Initialization Function
+        async function initRadar() {
+            try {
+                // 1. Fetch Config from Server
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                if (!config.mapboxAccessToken) {
+                    throw new Error('No Access Token found');
+                }
+
+                mapboxgl.accessToken = config.mapboxAccessToken;
+
+                // 2. Initialize Map
+                const map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/dark-v11', // Dark base
+                    center: [139.7671, 35.6812], // Default: Tokyo
+                    zoom: 13,
+                    pitch: 0, // Flat view for radar feel
+                    attributionControl: false
+                });
+
+                // 3. Add Directions Plugin
+                const directions = new MapboxDirections({
+                    accessToken: mapboxgl.accessToken,
+                    unit: 'metric',
+                    profile: 'mapbox/walking', // Default to walking (dragon ball search style)
+                    controls: {
+                        instructions: true,
+                        profileSwitcher: true
+                    },
+                    styles: customRouteStyles, // Apply our neon styles
+                    interactive: true
+                });
+
+                map.addControl(directions, 'top-left');
+
+                // 4. Add Geolocate Control (Current Location)
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    showUserHeading: true
+                });
+
+                map.addControl(geolocate, 'bottom-right');
+
+                // 5. Setup Event Listeners
+                map.on('load', () => {
+                    // Activate Geolocation immediately
+                    geolocate.trigger();
+                    
+                    // Hide Loader
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 1000);
+                });
+
+                // Custom Logic: When a destination is set, replace the marker with Dragon Ball
+                directions.on('route', (e) => {
+                    if (e.route && e.route.length > 0) {
+                        customizeDestinationMarker();
+                    }
+                });
+
+            } catch (error) {
+                console.error('Radar Malfunction:', error);
+                document.querySelector('.loader-text').innerText = "SYSTEM ERROR";
+                document.querySelector('.loader-text').style.color = "red";
+            }
+        }
+
+        // Function to hack the destination marker to look like a Dragon Ball
+        function customizeDestinationMarker() {
+            // The Directions plugin creates markers with specific classes.
+            // We find the destination marker container and inject our Dragon Ball div.
+            
+            // Wait a split second for DOM to update
+            setTimeout(() => {
+                const markers = document.querySelectorAll('.mapboxgl-marker');
+                markers.forEach(marker => {
+                    // The destination marker usually comes last or can be identified by position logic
+                    // However, mapbox-gl-directions uses internal SVG markers usually.
+                    // We can try to target the one that corresponds to destination B.
+                    // A simpler visual hack:
+                    
+                    // Check if we already stylized it
+                    if (marker.querySelector('.dragon-ball-marker')) return;
+
+                    // If it's a destination marker (Logic depends on plugin version, usually it has a 'B' text or distinct class)
+                    // For this immersive, we'll transform ALL non-user location markers into Dragon Balls for fun,
+                    // or try to target the "B" marker.
+                    
+                    // Note: The plugin creates SVG paths inside the marker.
+                    // Let's replace innerHTML of the marker if it's not the user location.
+                    if (!marker.classList.contains('mapboxgl-user-location-dot')) {
+                        // Assume it's a waypoint or destination
+                        marker.innerHTML = '<div class="dragon-ball-marker"></div>';
+                    }
+                });
+            }, 500);
+        }
+
+        // Boot
+        initRadar();
+
+    </script>
+</body>
+</html>
