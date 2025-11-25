@@ -31,7 +31,7 @@
             background-color: var(--radar-bg);
             color: var(--radar-bright);
             font-family: 'VT323', monospace;
-            overflow: hidden; /* Prevent body scroll */
+            overflow: hidden;
         }
 
         /* --- MAP & OVERLAYS --- */
@@ -67,13 +67,7 @@
             0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; }
         }
 
-        /* --- UI CUSTOMIZATION (Compact Mode) --- */
-        
-        /* スマホで見やすいように、入力ボックスと案内板をコンパクト化します。
-           Mapbox DirectionsのデフォルトCSSを強力に上書きします。
-        */
-
-        /* コンテナ全体の設定 */
+        /* --- UI CUSTOMIZATION --- */
         .mapboxgl-ctrl-directions {
             background-color: var(--ui-bg) !important;
             border: 2px solid var(--radar-bright) !important;
@@ -81,97 +75,48 @@
             color: var(--radar-bright) !important;
             font-family: 'VT323', monospace;
             min-width: unset !important;
-            width: 100% !important; /* 親要素に合わせる */
-            max-width: 400px; /* PCでの最大幅 */
+            width: 100% !important; max-width: 400px;
             margin: 10px;
         }
-
-        /* 入力ボックス周辺 */
-        .directions-inputs {
-            padding: 5px 10px !important;
-        }
-
+        .directions-inputs { padding: 5px 10px !important; }
         .mapboxgl-ctrl-directions input {
-            background-color: #000 !important;
-            color: var(--radar-bright) !important;
+            background-color: #000 !important; color: var(--radar-bright) !important;
             border: 1px solid var(--radar-bright) !important;
-            font-family: 'VT323', monospace;
-            text-transform: uppercase;
-            font-size: 1rem !important;
-            height: 30px !important; /* 入力欄を少し小さく */
+            font-family: 'VT323', monospace; text-transform: uppercase;
+            font-size: 1rem !important; height: 30px !important;
         }
-        
         .mapboxgl-ctrl-directions input::placeholder { color: rgba(0, 255, 0, 0.4); }
-
-        /* モード切替ボタン (Traffic, Driving, Walking...) */
-        .directions-control-directions {
-            margin: 0 !important;
-        }
-        
+        .directions-control-directions { margin: 0 !important; }
         .mapboxgl-ctrl-directions .directions-profile-switcher {
-            background: transparent !important;
-            border-bottom: 1px solid var(--radar-bright);
-            padding: 5px;
+            background: transparent !important; border-bottom: 1px solid var(--radar-bright); padding: 5px;
         }
-        
-        /* 重要な修正: 案内リストのサイズ制限 */
         .directions-control-instructions {
-            background-color: var(--ui-bg) !important;
-            height: auto !important;
-            /* ここがポイント：画面の高さの30%までしか伸ばさない */
-            max-height: 30vh !important; 
-            overflow-y: auto !important; /* はみ出たらスクロール */
+            background-color: var(--ui-bg) !important; height: auto !important;
+            max-height: 30vh !important; overflow-y: auto !important;
             border-top: 1px solid var(--radar-bright);
         }
+        .directions-control-instructions::-webkit-scrollbar { width: 8px; }
+        .directions-control-instructions::-webkit-scrollbar-track { background: #001100; }
+        .directions-control-instructions::-webkit-scrollbar-thumb { background: #00ff00; border-radius: 4px; }
 
-        /* スクロールバーもサイバー風に */
-        .directions-control-instructions::-webkit-scrollbar {
-            width: 8px;
-        }
-        .directions-control-instructions::-webkit-scrollbar-track {
-            background: #001100; 
-        }
-        .directions-control-instructions::-webkit-scrollbar-thumb {
-            background: #00ff00; 
-            border-radius: 4px;
-        }
-
-        /* モバイル用レイアウト調整 */
         @media screen and (max-width: 640px) {
-            /* コントロール配置エリアの設定 */
             .mapboxgl-ctrl-top-left {
-                width: 90%; /* 画面幅の90% */
-                left: 5% !important; /* 中央寄せ */
-                top: 10px !important;
-                max-height: 45vh; /* 全体でも画面半分以下に */
-                display: flex;
-                flex-direction: column;
+                width: 90%; left: 5% !important; top: 10px !important;
+                max-height: 45vh; display: flex; flex-direction: column;
             }
-
-            .mapboxgl-ctrl-directions {
-                width: 100% !important;
-                margin: 0 !important;
-                font-size: 0.9rem; /* 文字サイズ少し小さく */
-            }
-
-            /* 案内テキストの余白調整 */
-            .mapbox-directions-step {
-                padding: 10px !important;
-                border-bottom: 1px solid rgba(0,255,0,0.2);
-            }
+            .mapboxgl-ctrl-directions { width: 100% !important; margin: 0 !important; font-size: 0.9rem; }
+            .mapbox-directions-step { padding: 10px !important; border-bottom: 1px solid rgba(0,255,0,0.2); }
         }
 
-        /* Header (ロゴ) */
         .radar-header {
-            position: absolute; top: 10px; right: 10px; z-index: 0; /* マップの裏に行かないよう注意、でも邪魔ならz-index下げる */
-            pointer-events: none; /* クリック邪魔しない */
+            position: absolute; top: 10px; right: 10px; z-index: 0; pointer-events: none;
         }
         .radar-header h1 {
             font-size: 1.2rem; margin: 0; color: rgba(0,255,0,0.7);
             text-shadow: 0 0 5px var(--radar-bright);
         }
 
-        /* --- MARKERS --- */
+        /* --- DRAGON BALL MARKERS --- */
         .mapboxgl-user-location-dot {
             background-color: transparent !important; width: 30px !important; height: 30px !important; box-shadow: none !important;
         }
@@ -185,16 +130,34 @@
         @keyframes pulse-red { 0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } }
 
         .dragon-ball-marker {
-            width: 24px; height: 24px; border-radius: 50%;
+            width: 28px; height: 28px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, var(--dragon-ball), var(--dragon-ball-glow));
             box-shadow: 0 0 15px var(--dragon-ball), inset -2px -2px 5px rgba(0,0,0,0.5);
-            border: 1px solid #fff; position: relative; animation: bounce 2s infinite ease-in-out;
+            border: 1px solid #fff; position: relative;
+            cursor: pointer; /* Clickable */
+            transition: transform 0.2s;
         }
+        .dragon-ball-marker:hover { transform: scale(1.2); z-index: 100; }
+        
+        /* Star rendering via attribute */
         .dragon-ball-marker::after {
-            content: '★'; color: #d94e00; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); font-size: 12px; line-height: 1;
+            content: attr(data-stars); /* JSでセットした星を表示 */
+            color: #d94e00; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px; /* 星が多いと溢れるので小さく */
+            line-height: 1; width: 100%; text-align: center;
+            letter-spacing: -1px; font-weight: bold;
         }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* Popup Styling */
+        .mapboxgl-popup { max-width: 200px; z-index: 200; }
+        .mapboxgl-popup-content {
+            background: var(--ui-bg) !important; color: var(--radar-bright) !important;
+            border: 1px solid var(--radar-bright); font-family: 'VT323', monospace;
+            padding: 10px; box-shadow: 0 0 10px var(--radar-bright);
+        }
+        .mapboxgl-popup-close-button { color: var(--radar-bright); }
+        .mapboxgl-popup-tip { border-top-color: var(--radar-bright) !important; }
 
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -204,9 +167,9 @@
     </style>
 </head>
 <body>
-    <div id="loader"><div style="font-size: 4rem;">⌛</div><div class="loader-text">INITIALIZING...</div></div>
+    <div id="loader"><div style="font-size: 4rem;">⌛</div><div class="loader-text">SEARCHING...</div></div>
     
-    <div class="radar-header"><h1>SULE RADAR</h1></div>
+    <div class="radar-header"><h1>DRAGON RADAR</h1></div>
     <div class="radar-overlay"></div>
     <div class="radar-vignette"></div>
     <div class="scanline"></div>
@@ -215,7 +178,7 @@
     <script>
         const loader = document.getElementById('loader');
         
-        // Styles
+        // Styles for navigation line
         const customRouteStyles = [
             { 'id': 'directions-route-line-casing', 'type': 'line', 'source': 'directions', 'layout': { 'line-cap': 'round', 'line-join': 'round' }, 'paint': { 'line-color': '#004400', 'line-width': 12 }, 'filter': ['all', ['in', '$type', 'LineString'], ['in', 'route', 'selected']] },
             { 'id': 'directions-route-line', 'type': 'line', 'source': 'directions', 'layout': { 'line-cap': 'round', 'line-join': 'round' }, 'paint': { 'line-color': '#00ff00', 'line-width': 7, 'line-blur': 2 }, 'filter': ['all', ['in', '$type', 'LineString'], ['in', 'route', 'selected']] },
@@ -233,44 +196,51 @@
                 const map = new mapboxgl.Map({
                     container: 'map',
                     style: 'mapbox://styles/mapbox/dark-v11',
-                    center: [139.7671, 35.6812], zoom: 13, pitch: 0, attributionControl: false
+                    center: [139.7671, 35.6812], zoom: 2, /* Start zoomed out to see the world */
+                    pitch: 0, attributionControl: false
                 });
 
                 const directions = new MapboxDirections({
                     accessToken: mapboxgl.accessToken,
-                    unit: 'metric',
-                    profile: 'mapbox/walking',
+                    unit: 'metric', profile: 'mapbox/walking',
                     controls: { instructions: true, profileSwitcher: true },
-                    styles: customRouteStyles,
-                    interactive: true
+                    styles: customRouteStyles, interactive: true
                 });
-                
-                // Add to top-left
                 map.addControl(directions, 'top-left');
 
-                // Geolocate
                 const geolocate = new mapboxgl.GeolocateControl({
                     positionOptions: { enableHighAccuracy: true },
-                    trackUserLocation: true,
-                    showUserHeading: true
+                    trackUserLocation: true, showUserHeading: true
                 });
                 map.addControl(geolocate, 'bottom-right');
 
-                // Auto set origin logic
-                let isOriginSet = false;
+                // Flag to ensure we only scatter balls once
+                let ballsScattered = false;
+
+                // When location is found...
                 geolocate.on('geolocate', (e) => {
-                    if (!isOriginSet) {
-                        const coords = [e.coords.longitude, e.coords.latitude];
-                        directions.setOrigin(coords);
-                        isOriginSet = true;
+                    if (!ballsScattered) {
+                        const userCoords = [e.coords.longitude, e.coords.latitude];
+                        
+                        // 1. Set navigation origin
+                        directions.setOrigin(userCoords);
+                        
+                        // 2. Scatter Dragon Balls!
+                        scatterDragonBalls(map, userCoords);
+                        
+                        // 3. Zoom into user location
+                        map.flyTo({ center: userCoords, zoom: 14, speed: 1.5 });
+                        
+                        ballsScattered = true;
                     }
                 });
 
                 map.on('load', () => {
-                    geolocate.trigger();
+                    geolocate.trigger(); // Start searching location
                     setTimeout(() => { loader.style.display = 'none'; }, 1000);
                 });
 
+                // Style B point marker if set
                 directions.on('route', (e) => {
                     if (e.route && e.route.length > 0) customizeDestinationMarker();
                 });
@@ -278,17 +248,99 @@
             } catch (error) {
                 console.error(error);
                 document.querySelector('.loader-text').innerText = "ERROR";
-                document.querySelector('.loader-text').style.color = "red";
+            }
+        }
+
+        // Logic to scatter 7 balls
+        function scatterDragonBalls(map, userCoords) {
+            // Star characters
+            const stars = ['★', '★★', '★★★', '★★★★', '★★★★★', '★★★★★★', '★★★★★★★'];
+            
+            // We want the 4-star ball (index 3) to be at user location
+            // Others random world-wide
+            
+            for (let i = 0; i < 7; i++) {
+                let coords;
+                let isFourStar = (i === 3);
+
+                if (isFourStar) {
+                    // Place 4-star ball exactly at user location (slightly offset so it doesn't hide user arrow)
+                    coords = [userCoords[0] + 0.0001, userCoords[1] + 0.0001]; 
+                } else {
+                    // Random coordinates world-wide
+                    // Lon: -180 to 180, Lat: -60 to 60 (Avoid polar caps)
+                    const lon = (Math.random() * 360) - 180;
+                    const lat = (Math.random() * 120) - 60;
+                    coords = [lon, lat];
+                }
+
+                // Create DOM element for marker
+                const el = document.createElement('div');
+                el.className = 'dragon-ball-marker';
+                el.setAttribute('data-stars', stars[i]); // Set stars CSS content
+
+                // Add click event for address lookup
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent map click
+                    showBallLocation(map, coords, stars[i]);
+                });
+
+                // Add to map
+                new mapboxgl.Marker(el)
+                    .setLngLat(coords)
+                    .addTo(map);
+            }
+        }
+
+        // Fetch address and show popup
+        async function showBallLocation(map, coords, starName) {
+            // Show a temporary loading popup
+            const popup = new mapboxgl.Popup({ offset: 25 })
+                .setLngLat(coords)
+                .setHTML(`<div>Searching Data...</div>`)
+                .addTo(map);
+
+            try {
+                // Reverse Geocoding API
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?access_token=${mapboxgl.accessToken}&language=ja&types=country,region,place,locality`;
+                
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                let locationName = "UNCHARTED AREA (洋上/未開の地)";
+                if (data.features && data.features.length > 0) {
+                    locationName = data.features[0].place_name;
+                }
+
+                // Update popup content
+                popup.setHTML(`
+                    <div style="text-align:center;">
+                        <div style="font-size:1.5rem; color:#ffdd00;">${starName}</div>
+                        <div style="border-top:1px solid #0f0; margin:5px 0;"></div>
+                        <div>${locationName}</div>
+                        <div style="font-size:0.8rem; opacity:0.7; margin-top:5px;">
+                            LAT: ${coords[1].toFixed(2)}<br>LON: ${coords[0].toFixed(2)}
+                        </div>
+                    </div>
+                `);
+                
+                // Fly to that ball to see it better
+                map.flyTo({ center: coords, zoom: 4 });
+
+            } catch (err) {
+                popup.setHTML(`<div>SIGNAL LOST</div>`);
             }
         }
 
         function customizeDestinationMarker() {
             setTimeout(() => {
                 document.querySelectorAll('.mapboxgl-marker').forEach(marker => {
-                    if (marker.querySelector('.dragon-ball-marker')) return;
-                    if (!marker.classList.contains('mapboxgl-user-location-dot')) {
-                        marker.innerHTML = '<div class="dragon-ball-marker"></div>';
-                    }
+                    // Only customize destination markers (not balls, not user)
+                    if (marker.classList.contains('dragon-ball-marker')) return;
+                    if (marker.classList.contains('mapboxgl-user-location-dot')) return;
+                    
+                    // Simple glowing dot for destination Target
+                    marker.innerHTML = '<div style="width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 0 20px #fff;animation:blink 0.5s infinite;"></div>';
                 });
             }, 500);
         }
